@@ -19,12 +19,13 @@ public class PlayerProjectile : MonoBehaviour {
 		
 	}
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider collision)
     {
         if(collision.gameObject.tag == "Boss")
         {
             Boss b = collision.gameObject.GetComponent<Boss>();
             b.TakeDamage(damage);
+            Destroy(gameObject);
         }
     }
 }

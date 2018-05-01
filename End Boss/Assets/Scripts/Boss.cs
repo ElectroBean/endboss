@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Boss : MonoBehaviour {
+public class Boss : MonoBehaviour
+{
 
     [Header("Health")]
     public float totalHealth;
@@ -20,41 +21,69 @@ public class Boss : MonoBehaviour {
     public GameObject NadePrefab;
     public float throwDelay = 2.0f;
     public float throwCountdown;
-    public float throwForce = 40.0f;
+    public float throwForce = 40.0f;.
 
-	// Use this for initialization
-	void Start () {
+    [Header("Phase 2: Rock Fall")]
+    public Transform[] spawnMaxMin;
+    public float spawnDelay;
+    public float spawnCounter;
+    public GameObject rockPrefab;
+    public float rockspawnVelocity;
+    public float warningTime;
+    float warningCountdown;
+    public LineRenderer lr;
+    bool chosenPos = false;
+    Vector3 randomSpawnPoint = new Vector3();
+
+    [Header("Phase 3: Blockable 1 hit")]
+    public LineRenderer targeter;
+    public GameObject InitialObject;
+    public float shootForce;
+    float blockableCDTimer;
+    public float blockableCDMax;
+
+    private void Awake()
+    {
+        lr = GetComponent<LineRenderer>();
+    }
+
+    // Use this for initialization
+    void Start()
+    {
         throwCountdown = throwDelay;
-	}
-	
-	// Update is called once per frame
-	void Update () {
+        warningCountdown = warningTime;
+        blockableCDTimer = blockableCDMax;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
         healthPercent = (currentHealth / totalHealth) * 100;
         transform.LookAt(target.transform);
         transform.localEulerAngles = new Vector3(0, transform.localEulerAngles.y, transform.localEulerAngles.z);
-        
-        if(healthPercent > 75)
+
+        if (healthPercent > 75)
         {
             Phase1();
         }
-        else if(healthPercent > 50)
+        else if (healthPercent > 50)
         {
-
+            Phase2();
         }
-        else if(healthPercent > 25)
+        else if (healthPercent > 25)
         {
-
+            Phase3();
         }
         else
         {
-
+            Phase4();
         }
-	}
+    }
 
     void Phase1()
     {
         throwCountdown -= Time.deltaTime;
-        if(throwCountdown <= 0)
+        if (throwCountdown <= 0)
         {
             ThrowNade();
             throwCountdown = throwDelay;
@@ -62,6 +91,31 @@ public class Boss : MonoBehaviour {
     }
     void Phase2()
     {
+        spawnCounter -= Time.deltaTime;
+        if (spawnCounter <= 0)
+        {
+            warningCountdown -= Time.deltaTime;
+            
+            if (!chosenPos)
+            {
+                float randomX = Random.Range(spawnMaxMin[0].position.x, spawnMaxMin[1].position.x);
+                float Y = 5;
+                float randomZ = Random.Range(spawnMaxMin[0].position.y, spawnMaxMin[1].position.y);
+                randomSpawnPoint = new Vector3(randomX, Y, randomZ);
+                lr.SetPosition(0, randomSpawnPoint);
+                lr.SetPosition(1, randomSpawnPoint + -Vector3.up * 5);
+                chosenPos = true;
+
+            }
+
+            if (warningCountdown <= 0)
+            {
+                Instantiate(rockPrefab, randomSpawnPoint, Quaternion.identity);
+                spawnCounter = spawnDelay;
+                warningCountdown = warningTime;
+                chosenPos = false;
+            }
+        }
 
     }
     void Phase3()
@@ -83,5 +137,10 @@ public class Boss : MonoBehaviour {
     public void TakeDamage(float damage)
     {
         currentHealth -= damage;
+    }
+
+    public void BossChargeAttack()
+    {
+
     }
 }
