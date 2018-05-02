@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class Boss : MonoBehaviour
 {
@@ -10,6 +11,8 @@ public class Boss : MonoBehaviour
     public float totalHealth;
     public float currentHealth;
     float healthPercent;
+    public Slider healthUI;
+     
 
     [Header("NavMesh")]
     public NavMeshAgent NMA;
@@ -21,7 +24,7 @@ public class Boss : MonoBehaviour
     public GameObject NadePrefab;
     public float throwDelay = 2.0f;
     public float throwCountdown;
-    public float throwForce = 40.0f;.
+    public float throwForce = 40.0f;
 
     [Header("Phase 2: Rock Fall")]
     public Transform[] spawnMaxMin;
@@ -36,11 +39,14 @@ public class Boss : MonoBehaviour
     Vector3 randomSpawnPoint = new Vector3();
 
     [Header("Phase 3: Blockable 1 hit")]
-    public LineRenderer targeter;
+    public LineRenderer laserLR;
     public GameObject InitialObject;
     public float shootForce;
     float blockableCDTimer;
     public float blockableCDMax;
+    public float lrWarningTime;
+    float lrWarningCounter;
+
 
     private void Awake()
     {
@@ -53,14 +59,20 @@ public class Boss : MonoBehaviour
         throwCountdown = throwDelay;
         warningCountdown = warningTime;
         blockableCDTimer = blockableCDMax;
+        lrWarningCounter = lrWarningTime;
+        healthPercent = (currentHealth / totalHealth);
+        healthUI.value = healthPercent;
+
+        FLoatingTextController.Initialize();
     }
 
     // Update is called once per frame
     void Update()
     {
-        healthPercent = (currentHealth / totalHealth) * 100;
+        healthUI.value = healthPercent = (currentHealth / totalHealth);
         transform.LookAt(target.transform);
         transform.localEulerAngles = new Vector3(0, transform.localEulerAngles.y, transform.localEulerAngles.z);
+      
 
         if (healthPercent > 75)
         {
@@ -95,7 +107,7 @@ public class Boss : MonoBehaviour
         if (spawnCounter <= 0)
         {
             warningCountdown -= Time.deltaTime;
-            
+
             if (!chosenPos)
             {
                 float randomX = Random.Range(spawnMaxMin[0].position.x, spawnMaxMin[1].position.x);
@@ -137,10 +149,26 @@ public class Boss : MonoBehaviour
     public void TakeDamage(float damage)
     {
         currentHealth -= damage;
+        FLoatingTextController.CreateFloatingText(damage.ToString(), transform);
     }
 
     public void BossChargeAttack()
     {
+        blockableCDTimer -= Time.deltaTime;
+        if (blockableCDTimer <= 0)
+        {
+            laserLR.SetPosition(0, transform.position);
+            laserLR.SetPosition(1, target.transform.position);
+            lrWarningCounter -= Time.deltaTime;
+            if (lrWarningCounter <= 0)
+            {
+                laserLR.enabled = false;
+                //do the attack
 
+                lrWarningCounter = lrWarningTime;
+                blockableCDTimer = blockableCDMax;
+            }
+ 
+        }
     }
 }
